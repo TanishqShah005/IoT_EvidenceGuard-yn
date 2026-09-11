@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { evidenceRepository, evidenceStorage } from '@/lib/evidence/store'
 import type { EvidenceLog, LogLevel } from '@/lib/evidence/types'
+import { requireInvestigator } from '@/lib/firebase/authorization'
 
 export const runtime = 'nodejs'
 
@@ -21,6 +22,8 @@ function canonicalContent(log: SourceLog) {
 }
 
 export async function POST(request: Request) {
+  const authorization = await requireInvestigator(request)
+  if (authorization instanceof Response) return authorization
   try {
     const payload = await request.json() as SourceLog[] | { logs?: SourceLog[] }
     const logs = Array.isArray(payload) ? payload : payload.logs

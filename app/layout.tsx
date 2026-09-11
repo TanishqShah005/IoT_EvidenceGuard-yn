@@ -1,6 +1,7 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import { FirebaseAuthProvider } from '@/components/firebase-auth-provider'
 
 export const metadata: Metadata = {
   title: 'EvidenceGuard | Investigator Dashboard',
@@ -41,7 +42,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="bg-background">
       <body className="antialiased">
-        {children}
+        <FirebaseAuthProvider>{children}</FirebaseAuthProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

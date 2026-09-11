@@ -2,8 +2,10 @@
 
 import Link from 'next/link'
 import useSWR from 'swr'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { EvidenceLog } from '@/lib/evidence/types'
+import { useFirebaseAuth } from '@/components/firebase-auth-provider'
 import {
   AlertTriangle,
   Bell,
@@ -73,6 +75,8 @@ const fetcher = async (url: string) => {
 }
 
 export default function Page() {
+  const router = useRouter()
+  const { user, loading: authLoading, configured } = useFirebaseAuth()
   const { data, error, isLoading, mutate } = useSWR('/api/evidence', fetcher, { refreshInterval: 15000, revalidateOnFocus: false })
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -87,6 +91,9 @@ export default function Page() {
   const [showJson, setShowJson] = useState(true)
   const [importing, setImporting] = useState(false)
   const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => { if (configured && !authLoading && !user) router.replace('/login') }, [authLoading, configured, router, user])
+  const authHeaders = async () => user ? { Authorization: `Bearer ${await user.getIdToken()}` } : {}
 
   const announce = (message: string) => {
     setNotice(message)
@@ -108,7 +115,7 @@ export default function Page() {
     setImporting(true)
     try {
       const payload = JSON.parse(await file.text())
-      const response = await fetch('/api/evidence/import', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) })
+      const response = await fetch('/api/evidence/import', { method: 'POST', headers: { 'content-type': 'application/json', ...(await authHeaders()) }, body: JSON.stringify(payload) })
       const result = await response.json()
       if (!response.ok) throw new Error(result.error ?? 'Import failed')
       await mutate()
@@ -124,7 +131,7 @@ export default function Page() {
     if (!activeSelected || !window.confirm(`Delete log #${activeSelected.id}?`)) return
     setDeleting(true)
     try {
-      const response = await fetch(`/api/evidence/${activeSelected.id}`, { method: 'DELETE' })
+      const response = await fetch(`/api/evidence/${activeSelected.id}`, { method: 'DELETE', headers: await authHeaders() })
       if (!response.ok) throw new Error('Unable to delete log')
       await mutate()
       setSelected(demoLogs[0])
