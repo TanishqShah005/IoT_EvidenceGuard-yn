@@ -76,7 +76,7 @@ const fetcher = async (url: string) => {
 
 export default function Page() {
   const router = useRouter()
-  const { user, loading: authLoading, configured } = useFirebaseAuth()
+  const { user, loading: authLoading, configured, isInvestigator } = useFirebaseAuth()
   const { data, error, isLoading, mutate } = useSWR('/api/evidence', fetcher, { refreshInterval: 15000, revalidateOnFocus: false })
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -92,7 +92,8 @@ export default function Page() {
   const [importing, setImporting] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
-  useEffect(() => { if (configured && !authLoading && !user) router.replace('/login') }, [authLoading, configured, router, user])
+  useEffect(() => { if (!authLoading && (!configured || !user || !isInvestigator)) router.replace('/login') }, [authLoading, configured, isInvestigator, router, user])
+  if (authLoading || !configured || !user || !isInvestigator) return <main className="auth-page"><div className="auth-card"><p className="eyebrow">EVIDENCEGUARD / SECURE ACCESS</p><h1>Checking investigator access</h1><p className="subheading">Verifying your Firebase session and investigator permissions.</p></div></main>
   const authHeaders = async () => user ? { Authorization: `Bearer ${await user.getIdToken()}` } : {}
 
   const announce = (message: string) => {
