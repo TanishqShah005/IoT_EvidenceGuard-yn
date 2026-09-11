@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import {
   AlertTriangle,
@@ -36,16 +37,16 @@ const logs = [
 ]
 
 const navItems = [
-  { label: 'Dashboard', icon: LayoutDashboard },
-  { label: 'Evidence Timeline', icon: SlidersHorizontal },
-  { label: 'Hash Verification', icon: ShieldCheck },
-  { label: 'Devices', icon: Monitor },
-  { label: 'Alerts & Tamper', icon: AlertTriangle },
-  { label: 'Reports', icon: FileJson },
-  { label: 'Threat Intelligence', icon: CircleHelp },
-  { label: 'Settings', icon: Settings },
-  { label: 'Users & Roles', icon: UserRound },
-  { label: 'Audit Logs', icon: ClipboardCheck },
+  { label: 'Dashboard', href: '/', icon: LayoutDashboard },
+  { label: 'Evidence Timeline', href: '/evidence-timeline', icon: SlidersHorizontal },
+  { label: 'Hash Verification', href: '/hash-verification', icon: ShieldCheck },
+  { label: 'Devices', href: '/devices', icon: Monitor },
+  { label: 'Alerts & Tamper', href: '/alerts-tamper', icon: AlertTriangle },
+  { label: 'Reports', href: '/reports', icon: FileJson },
+  { label: 'Threat Intelligence', href: '/threat-intelligence', icon: CircleHelp },
+  { label: 'Settings', href: '/settings', icon: Settings },
+  { label: 'Users & Roles', href: '/users-roles', icon: UserRound },
+  { label: 'Audit Logs', href: '/audit-logs', icon: ClipboardCheck },
 ]
 
 function StatCard({ icon: Icon, label, value, detail, tone }: { icon: typeof Monitor; label: string; value: string; detail: string; tone: 'blue' | 'green' | 'red' }) {
@@ -83,7 +84,7 @@ export default function Page() {
     </header>
     <div className="body-layout">
       <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
-        <nav>{navItems.map(({ label, icon: Icon }) => <button key={label} className={label === 'Dashboard' ? 'active' : ''} title={collapsed ? label : undefined}><Icon /><span>{label}</span></button>)}</nav>
+        <nav>{navItems.map(({ label, href, icon: Icon }) => <Link key={label} href={href} className={label === 'Dashboard' ? 'active' : ''} title={collapsed ? label : undefined}><Icon /><span>{label}</span></Link>)}</nav>
         <button className="collapse-button" onClick={() => setCollapsed(!collapsed)}>{collapsed ? <ChevronRight /> : <ChevronLeft />}<span>{collapsed ? 'Expand' : 'Collapse'}</span></button>
       </aside>
       <section className="content">
