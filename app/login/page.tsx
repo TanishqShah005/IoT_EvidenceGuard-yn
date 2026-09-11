@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [busy, setBusy] = useState(false)
   async function submit(event: FormEvent) {
     event.preventDefault(); setBusy(true); setError('')
-    try { await signIn(email, password); router.push('/') } catch { setError('Invalid credentials or investigator role.') } finally { setBusy(false) }
+    try { await signIn(email, password); router.push('/') } catch (authError) { setError(authError instanceof Error ? authError.message : 'Unable to sign in. Check the Firebase credentials and investigator role.') } finally { setBusy(false) }
   }
   if (loading) return <main className="auth-page"><div className="auth-card"><h1>Checking secure access...</h1><p className="subheading">Verifying your Firebase session.</p></div></main>
   if (user) { router.replace('/'); return <main className="auth-page"><div className="auth-card"><h1>Opening dashboard...</h1><p className="subheading">Your investigator session is active.</p></div></main> }
