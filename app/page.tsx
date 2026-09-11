@@ -76,7 +76,7 @@ const fetcher = async (url: string) => {
 
 export default function Page() {
   const router = useRouter()
-  const { user, loading: authLoading, configured, isInvestigator } = useFirebaseAuth()
+  const { user, loading: authLoading, configured, isInvestigator, signOutUser } = useFirebaseAuth()
   const { data, error, isLoading, mutate } = useSWR('/api/evidence', fetcher, { refreshInterval: 15000, revalidateOnFocus: false })
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -156,7 +156,7 @@ export default function Page() {
       <div className="brand"><div className="brand-mark"><ShieldCheck /></div><div><strong>EvidenceGuard</strong><span>Digital Forensics</span></div></div>
       <button className="menu-button" aria-label="Toggle navigation" onClick={() => setMobileOpen(!mobileOpen)}><Menu /></button>
       <div className="search-box"><Search /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search logs, devices, IPs, users..." /><kbd>⌘ K</kbd></div>
-      <div className="top-actions"><button aria-label="Notifications" className="icon-button" onClick={() => announce('You have 3 unread tamper alerts.')}><Bell /><i>3</i></button><button aria-label="Help" className="icon-button" onClick={() => announce('Workspace guide opened. Review the sidebar to explore EvidenceGuard.')}><CircleHelp /></button><div className="profile-wrap"><button className="profile" aria-expanded={profileOpen} onClick={() => setProfileOpen(!profileOpen)}><div className="avatar">IN</div><span>Investigator</span><ChevronDown /></button>{profileOpen && <div className="profile-menu"><button onClick={() => announce('Profile settings selected.')}>Profile settings</button><button onClick={() => announce('Signed-in session is active.')}>Session status</button></div>}</div></div>
+      <div className="top-actions"><button aria-label="Notifications" className="icon-button" onClick={() => announce('You have 3 unread tamper alerts.')}><Bell /><i>3</i></button><button aria-label="Help" className="icon-button" onClick={() => announce('Workspace guide opened. Review the sidebar to explore EvidenceGuard.')}><CircleHelp /></button><div className="profile-wrap"><button className="profile" aria-expanded={profileOpen} onClick={() => setProfileOpen(!profileOpen)}><div className="avatar">IN</div><span>Investigator</span><ChevronDown /></button>{profileOpen && <div className="profile-menu"><button onClick={() => announce('Profile settings selected.')}>Profile settings</button><button onClick={() => announce('Signed-in session is active.')}>Session status</button><button className="profile-signout" onClick={async () => { await signOutUser(); setProfileOpen(false); router.replace('/login') }}>Sign out</button></div>}</div></div>
     </header>
     <div className="body-layout">
       <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
