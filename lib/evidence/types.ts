@@ -1,5 +1,5 @@
 export type VerificationStatus = 'VERIFIED' | 'TAMPERED'
-export type LogLevel = 'INFO' | 'WARN'
+export type LogLevel = 'INFO' | 'WARN' | 'ERROR' | 'CRITICAL'
 
 export interface EvidenceLog {
   id: string
