@@ -93,7 +93,6 @@ export default function Page() {
   const [deleting, setDeleting] = useState(false)
 
   useEffect(() => { if (!authLoading && (!configured || !user || !isInvestigator)) router.replace('/login') }, [authLoading, configured, isInvestigator, router, user])
-  if (authLoading || !configured || !user || !isInvestigator) return <main className="auth-page"><div className="auth-card"><p className="eyebrow">EVIDENCEGUARD / SECURE ACCESS</p><h1>Checking investigator access</h1><p className="subheading">Verifying your Firebase session and investigator permissions.</p></div></main>
   const authHeaders = async () => user ? { Authorization: `Bearer ${await user.getIdToken()}` } : {}
 
   const announce = (message: string) => {
@@ -150,6 +149,8 @@ export default function Page() {
     const matchesQuery = [log.id, log.deviceId, log.eventType, log.sourceIp].some((field) => field.toLowerCase().includes(query.toLowerCase()))
     return matchesQuery && (device === 'All Devices' || log.deviceId === device) && (level === 'All Levels' || log.level === level)
   }), [logs, query, device, level])
+
+  if (authLoading || !configured || !user || !isInvestigator) return <main className="auth-page"><div className="auth-card"><p className="eyebrow">EVIDENCEGUARD / SECURE ACCESS</p><h1>Checking investigator access</h1><p className="subheading">Verifying your Firebase session and investigator permissions.</p></div></main>
 
   return <main className="app-shell">{notice && <div className="action-notice" role="status">{notice}</div>}
     <header className="topbar">
