@@ -42,6 +42,14 @@ export const evidenceRepository: EvidenceRepository & { saveVerification(record:
   async listLogs() {
     return [...logs.values()].sort((a, b) => b.timestamp.localeCompare(a.timestamp))
   },
+  async deleteLog(id) {
+    const log = logs.get(id)
+    if (!log) return false
+    logs.delete(id)
+    objects.delete(log.objectKey)
+    hashes.delete(log.objectKey)
+    return true
+  },
   async saveVerification(record) {
     verifications.push(record)
   },

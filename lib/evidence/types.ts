@@ -36,6 +36,7 @@ export interface EvidenceRepository {
   getLog(id: string): Promise<EvidenceLog | null>
   updateVerification(id: string, result: VerificationResult): Promise<EvidenceLog | null>
   listLogs(): Promise<EvidenceLog[]>
+  deleteLog(id: string): Promise<boolean>
 }
 
 export interface VerificationRecord {

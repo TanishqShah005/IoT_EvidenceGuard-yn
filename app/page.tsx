@@ -17,6 +17,8 @@ import {
   Clock3,
   Download,
   FileCheck2,
+  Trash2,
+  Upload,
   FileJson,
   Filter,
   LayoutDashboard,
@@ -71,7 +73,7 @@ const fetcher = async (url: string) => {
 }
 
 export default function Page() {
-  const { data, error, isLoading } = useSWR('/api/evidence', fetcher, { refreshInterval: 15000, revalidateOnFocus: false })
+  const { data, error, isLoading, mutate } = useSWR('/api/evidence', fetcher, { refreshInterval: 15000, revalidateOnFocus: false })
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -83,10 +85,55 @@ export default function Page() {
   const [profileOpen, setProfileOpen] = useState(false)
   const [notice, setNotice] = useState('')
   const [showJson, setShowJson] = useState(true)
+  const [importing, setImporting] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   const announce = (message: string) => {
     setNotice(message)
     window.setTimeout(() => setNotice(''), 2600)
+  }
+
+  const exportLogs = () => {
+    const blob = new Blob([JSON.stringify(filteredLogs, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `evidenceguard-logs-${new Date().toISOString().slice(0, 10)}.json`
+    link.click()
+    URL.revokeObjectURL(url)
+    announce(`${filteredLogs.length} log${filteredLogs.length === 1 ? '' : 's'} exported.`)
+  }
+
+  const importLogs = async (file: File) => {
+    setImporting(true)
+    try {
+      const payload = JSON.parse(await file.text())
+      const response = await fetch('/api/evidence/import', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(payload) })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error ?? 'Import failed')
+      await mutate()
+      announce(`${result.imported} log${result.imported === 1 ? '' : 's'} imported.`)
+    } catch (importError) {
+      announce(importError instanceof Error ? importError.message : 'Unable to import logs.')
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  const deleteSelectedLog = async () => {
+    if (!activeSelected || !window.confirm(`Delete log #${activeSelected.id}?`)) return
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/evidence/${activeSelected.id}`, { method: 'DELETE' })
+      if (!response.ok) throw new Error('Unable to delete log')
+      await mutate()
+      setSelected(demoLogs[0])
+      announce(`Log #${activeSelected.id} deleted.`)
+    } catch (deleteError) {
+      announce(deleteError instanceof Error ? deleteError.message : 'Unable to delete log.')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   const logs = data?.logs?.length ? data.logs : demoLogs
@@ -109,12 +156,12 @@ export default function Page() {
         <button className="collapse-button" onClick={() => setCollapsed(!collapsed)}>{collapsed ? <ChevronRight /> : <ChevronLeft />}<span>{collapsed ? 'Expand' : 'Collapse'}</span></button>
       </aside>
       <section className="content">
-        <div className="page-heading"><div><p className="eyebrow">FORENSIC OPERATIONS / LIVE VIEW</p><h1>Investigator Dashboard</h1><p className="subheading">Monitor evidence integrity and review device activity in real time.</p><p className={`data-sync ${error ? 'error' : ''}`}>{isLoading ? 'Syncing evidence records...' : error ? 'API unavailable · showing demo records' : data?.logs?.length ? `Live API · ${data.logs.length} records loaded` : 'API connected · awaiting evidence records'}</p></div><div className="heading-actions"><span className="live-dot"><i /> System live</span><button className="outline-button" onClick={() => announce('Report export queued. Your verified evidence report is being prepared.')}><Download /> Export report</button></div></div>
+        <div className="page-heading"><div><p className="eyebrow">FORENSIC OPERATIONS / LIVE VIEW</p><h1>Investigator Dashboard</h1><p className="subheading">Monitor evidence integrity and review device activity in real time.</p><p className={`data-sync ${error ? 'error' : ''}`}>{isLoading ? 'Syncing evidence records...' : error ? 'API unavailable · showing demo records' : data?.logs?.length ? `Live API · ${data.logs.length} records loaded` : 'API connected · awaiting evidence records'}</p></div><div className="heading-actions"><span className="live-dot"><i /> System live</span><label className={`outline-button import-button ${importing ? 'disabled' : ''}`}><Upload /> {importing ? 'Importing...' : 'Import logs'}<input type="file" accept="application/json,.json" disabled={importing} onChange={(event) => { const file = event.target.files?.[0]; if (file) void importLogs(file); event.currentTarget.value = '' }} /></label><button className="outline-button" onClick={exportLogs}><Download /> Export logs</button><button className="outline-button danger-outline" onClick={deleteSelectedLog} disabled={deleting}><Trash2 /> {deleting ? 'Deleting...' : 'Delete log'}</button></div></div>
         <div className="stats-grid"><StatCard icon={Monitor} label="Total Devices" value="12" detail="Online: 9  ·  Offline: 3" tone="blue" /><StatCard icon={FileCheck2} label="Total Logs" value="24,851" detail="Today: 1,542" tone="green" /><StatCard icon={AlertTriangle} label="Tamper Alerts" value="7" detail="Critical: 2  ·  High: 5" tone="red" /><StatCard icon={ShieldCheck} label="Integrity OK" value="99.62%" detail="Verified Logs" tone="green" /></div>
         <div className="dashboard-grid">
           <div className="main-column">
             <section className="panel timeline-panel">
-              <div className="panel-header"><div className="panel-title"><div className="title-icon"><Clock3 /></div><div><h2>Evidence Timeline</h2><p>Chronological device activity and verification events</p></div></div><div className="panel-actions"><button className="date-button" onClick={() => announce('Date range selector is ready for a connected date filter.')} aria-label="Select date range">May 20, 2025 <span>→</span> May 20, 2025 <ChevronDown /></button><button className="outline-button small" onClick={() => setShowFilters(!showFilters)}><Filter /> Filters</button><button className="outline-button small" onClick={() => announce('Timeline export queued.')}><Download /> Export</button></div></div>
+              <div className="panel-header"><div className="panel-title"><div className="title-icon"><Clock3 /></div><div><h2>Evidence Timeline</h2><p>Chronological device activity and verification events</p></div></div><div className="panel-actions"><button className="date-button" onClick={() => announce('Date range selector is ready for a connected date filter.')} aria-label="Select date range">May 20, 2025 <span>→</span> May 20, 2025 <ChevronDown /></button><button className="outline-button small" onClick={() => setShowFilters(!showFilters)}><Filter /> Filters</button><button className="outline-button small" onClick={exportLogs}><Download /> Export logs</button></div></div>
               {showFilters && <div className="inline-filter"><span>Quick filters</span><button onClick={() => { setDevice('All Devices'); setLevel('All Levels'); setQuery('') }}>Clear all</button></div>}
               <div className="table-wrap"><table><thead><tr><th>#</th><th>Timestamp (UTC)</th><th>Device ID</th><th>Event Type</th><th>Source IP</th><th>Level</th><th>Status</th></tr></thead><tbody>{filteredLogs.map((log) => <tr key={log.id} className={activeSelected.id === log.id ? 'selected' : ''} onClick={() => setSelected(log)}><td>{log.id}</td><td>{log.timestamp}</td><td>{log.deviceId}</td><td><span className="event-name">{log.eventType}</span></td><td>{log.sourceIp}</td><td><Badge tone={log.level === 'INFO' ? 'info' : 'warn'}>{log.level}</Badge></td><td><Badge tone={log.status === 'VERIFIED' ? 'success' : 'danger'}>{log.status === 'VERIFIED' ? 'Verified' : 'Tampered'}</Badge></td></tr>)}</tbody></table></div>
               <div className="table-footer"><span>Showing {filteredLogs.length ? 1 : 0} to {filteredLogs.length} of 24,851 entries</span><div className="pagination"><button><ChevronsLeft /></button><button><ChevronLeft /></button>{[1, 2, 3, 4, 5].map((n) => <button key={n} className={page === n ? 'current' : ''} onClick={() => setPage(n)}>{n}</button>)}<button><ChevronRight /></button><button><ChevronsRight /></button></div></div>
