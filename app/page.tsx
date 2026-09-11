@@ -84,7 +84,7 @@ export default function Page() {
     </header>
     <div className="body-layout">
       <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${mobileOpen ? 'mobile-open' : ''}`}>
-        <nav>{navItems.map(({ label, href, icon: Icon }) => <Link key={label} href={href} className={label === 'Dashboard' ? 'active' : ''} title={collapsed ? label : undefined}><Icon /><span>{label}</span></Link>)}</nav>
+        <nav>{navItems.map(({ label, href, icon: Icon }) => <Link key={label} href={href} className={label === 'Dashboard' ? 'active' : ''} title={collapsed ? label : undefined} onClick={() => setMobileOpen(false)}><Icon /><span>{label}</span></Link>)}</nav>
         <button className="collapse-button" onClick={() => setCollapsed(!collapsed)}>{collapsed ? <ChevronRight /> : <ChevronLeft />}<span>{collapsed ? 'Expand' : 'Collapse'}</span></button>
       </aside>
       <section className="content">
